@@ -20,6 +20,7 @@ rm -rf "${DIR}/build"
 . "$(dirname "${DIR}")/common/build.sh"
 build_linux
 
+# prepare package build
 mkdir -p "${DBUILD}/DEBIAN"
 sed -e "s/__PACKAGE__/${PACKAGE}/g" \
     -e "s/__VERSION__/${VERSION}/g" \
@@ -34,4 +35,3 @@ sed -e "/^__I2B2_DROP__/{r ${DRESOURCES}/database/i2b2_postgres_drop.sql" -e 'd;
 
 dpkg-deb --build "${DBUILD}"
 rm -rf "${DBUILD}"
-
