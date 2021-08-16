@@ -30,14 +30,6 @@ function i2b2_webclient() {
 	sed -i 's|loginDefaultPassword : \"demouser\"|loginDefaultPassword : \"\"|' "${DBUILD}${DWEBCLIENT}/js-i2b2/i2b2_ui_config.js"
 }
 
-function apache2_proxy() {
-	DAPACHE2CONF="${1}"
-	WILDFLYHOST="${2}"
-
-	mkdir -p "${DBUILD}${DAPACHE2CONF}"
-	sed -e "s/__WILDFLYHOST__/${WILDFLYHOST}/g" "${DRESOURCES}/aktin-j2ee-reverse-proxy.conf" >"${DBUILD}${DAPACHE2CONF}/aktin-j2ee-reverse-proxy.conf"
-}
-
 function wildfly_download() {
 	DWILDFLYHOME="$1"
 
@@ -95,7 +87,6 @@ function datasource_postinstall() {
 
 function build_linux() {
 	i2b2_webclient "/var/www/html/webclient"
-	apache2_proxy "/etc/apache2/conf-available" "localhost"
 	wildfly_download "/opt/wildfly"
 	wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
 	wildfly_config "/opt/wildfly" "/etc/wildfly"
@@ -103,4 +94,3 @@ function build_linux() {
 	database_postinstall "/usr/share/${PACKAGE}/database"
 	datasource_postinstall "/usr/share/${PACKAGE}/datasource"
 }
-

@@ -19,11 +19,8 @@ if [[ -n $(grep ";extension=curl" /etc/php/*/apache2/php.ini) ]]; then
 else
 	echo -e "apache2 php-curl extension already enabled."
 fi
-echo "Enabling apache2 proxy_http module ..."
-a2enmod proxy_http >/dev/null || true
-a2enconf aktin-j2ee-reverse-proxy >/dev/null || true
-echo "Restarting apache2 ..."
-systemctl restart apache2
+systemctl enable apache2.service
+systemctl start apache2.serivce || true
 
 # count databases with name i2b2
 PSQL=""
@@ -58,6 +55,7 @@ while ! systemctl start postgresql.service 2>/dev/null; do
 	fi
 done
 systemctl enable postgresql.service
+systemctl start postgresql.serivce || true
 
 if  [[ $(eval "$PSQL -l" | grep "i2b2" | wc -l) == 0 ]]; then
 	echo -e "Creating i2b2 database and users ..."
@@ -87,6 +85,8 @@ sed -e "s/__HOST__/$host/g" \
 id -u wildfly >/dev/null || adduser --system --group --disabled-login --home /var/lib/wildfly wildfly
 chown -R wildfly:wildfly /opt/wildfly
 systemctl daemon-reload
+
 systemctl enable wildfly
 systemctl start wildfly
-
+systemctl enable postgresql
+systemctl start postgresql
