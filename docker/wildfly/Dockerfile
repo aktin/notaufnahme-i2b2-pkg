@@ -25,4 +25,3 @@ ENV DBHOST=database
 ENV DBPORT=5432
 
 CMD ["/entrypoint.sh"]
-

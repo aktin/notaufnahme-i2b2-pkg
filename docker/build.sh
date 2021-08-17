@@ -49,4 +49,3 @@ if [ "${FULL}" = "full" ]; then
 	docker-compose build
 	cd "${cwd}"
 fi
-
