@@ -46,7 +46,7 @@ function wildfly_systemd() {
 	DSYSTEMD="$3"
 
 	mkdir -p "${DBUILD}${DWILDFLYCONFIG}" "${DBUILD}${DSYSTEMD}"
-	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.service" "${DBUILD}${DSYSTEMD}/"
+	cp "${DRESOURCES}/wildfly.service" "${DBUILD}${DSYSTEMD}/"
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.conf" "${DBUILD}${DWILDFLYCONFIG}/"
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/launch.sh" "${DBUILD}${DWILDFLYHOME}/bin/"
 }
@@ -71,6 +71,13 @@ function wildfly_i2b2() {
 	wget "https://jdbc.postgresql.org/download/postgresql-${VPOSTGRES_JDBC}.jar" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
+function postgresql_systemd() {
+	DSYSTEMD="$1"
+
+	mkdir -p "${DBUILD}${DSYSTEMD}"
+	cp "${DRESOURCES}/postgresql.service" "${DBUILD}${DSYSTEMD}/"
+}
+
 function database_postinstall() {
 	DDBPOSTINSTALL="$1"
 
@@ -91,6 +98,7 @@ function build_linux() {
 	wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
 	wildfly_config "/opt/wildfly" "/etc/wildfly"
 	wildfly_i2b2 "/opt/wildfly/standalone/deployments"
+	postgresql_systemd "/lib/systemd/system"
 	database_postinstall "/usr/share/${PACKAGE}/database"
 	datasource_postinstall "/usr/share/${PACKAGE}/datasource"
 }

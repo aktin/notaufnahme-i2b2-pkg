@@ -19,6 +19,7 @@ case "$1" in
 		rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}
 		rm -f /opt/wildfly/standalone/deployments/{crc,im,ont,pm,work}-ds.xml
 		;;
+		# TODO: remove also modified services postgresql and wildfly?
 	purge)
 		DWH_SHARED=$(echo $DPKG_MAINTSCRIPT_PACKAGE | awk -F '-' '{print $1"-"$2}')
 		PSQL=""
