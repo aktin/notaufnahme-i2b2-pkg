@@ -58,6 +58,7 @@ function wildfly_config() {
 	echo "JBOSS_HOME=\"${DWILDFLYHOME}\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
 	echo "JBOSS_OPTS=\"-Djboss.http.port=9090 -Djrmboss.as.management.blocking.timeout=6000\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
 
+	# increases JVM heap size
 	sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/appclient.conf"
 	sed -i 's/-Xms64m -Xmx512m/-Xms1014m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/standalone.conf"
 
