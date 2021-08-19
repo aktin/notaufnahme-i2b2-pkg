@@ -25,24 +25,29 @@ export DWHIMAGENAMESPACE="$(echo "${PACKAGE}" | awk -F '-' '{print "ghcr.io/"$1"
 # Load common linux files
 . "$(dirname "${DIR}")/common/build.sh"
 
+# Prepare wildfly docker
 mkdir -p "${DBUILD}/wildfly"
 sed -e "s/__VWILDFLY__/${VWILDFLY}/g" "${DIR}/wildfly/Dockerfile" >"${DBUILD}/wildfly/Dockerfile"
 cp "${DIR}/wildfly/entrypoint.sh" "${DBUILD}/wildfly/"
 cp "${DRESOURCES}/standalone.xml.patch" "${DBUILD}/wildfly/"
-wildfly_i2b2 "/wildfly"
-datasource_postinstall "/wildfly/ds"
+download_wildfly_i2b2 "/wildfly"
+download_wildfly_jdbc "/wildfly"
+move_datasource_for_postinstall "/wildfly/ds"
 
+# Prepapare postgresql docker
 mkdir -p "${DBUILD}/database"
 cp "${DIR}/database/Dockerfile" "${DBUILD}/database/"
-database_postinstall "/database/sql"
+move_database_for_postinstall "/database/sql"
 cat "${DBUILD}/database/sql/i2b2_postgres_init.sql" >"${DBUILD}/database/sql/00_init.sql"
 cat "${DBUILD}/database/sql/i2b2_db.sql" >>"${DBUILD}/database/sql/00_init.sql"
 
+# Prepare apache2 docker
 mkdir -p "${DBUILD}/httpd"
 cp "${DIR}/httpd/Dockerfile" "${DBUILD}/httpd/"
-i2b2_webclient "/httpd/i2b2webclient"
-apache2_proxy "/httpd" "wildfly"
+download_i2b2_webclient "/httpd/i2b2webclient"
+config_i2b2_webclient "/httpd/i2b2webclient"
 
+# Run docker-compose
 if [ "${FULL}" = "full" ]; then
 	cwd="$(pwd)"
 	cd "${DIR}"
