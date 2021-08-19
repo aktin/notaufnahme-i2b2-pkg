@@ -15,7 +15,7 @@ set +a
 
 mkdir -p "${DBUILD}"
 
-function i2b2_webclient() {
+function download_i2b2_webclient() {
 	DWEBCLIENT="${1}"
 
 	wget "https://github.com/i2b2/i2b2-webclient/archive/v${VI2B2_WEBCLIENT}.zip" -P "${DBUILD}"
@@ -23,6 +23,10 @@ function i2b2_webclient() {
 	rm "${DBUILD}/v${VI2B2_WEBCLIENT}.zip"
 	mkdir -p "$(dirname "${DBUILD}${DWEBCLIENT}")"
 	mv "${DBUILD}/i2b2-webclient-${VI2B2_WEBCLIENT}" "${DBUILD}${DWEBCLIENT}"
+}
+
+function config_i2b2_webclient() {
+	DWEBCLIENT="${1}"
 
 	sed -i 's|name: \"HarvardDemo\",|name: \"AKTIN\",|' "${DBUILD}${DWEBCLIENT}/i2b2_config_data.js"
 	sed -i 's|urlCellPM: \"http://services.i2b2.org/i2b2/services/PMService/\",|urlCellPM: \"http://127.0.0.1:9090/i2b2/services/PMService/\",|' "${DBUILD}${DWEBCLIENT}/i2b2_config_data.js"
@@ -30,7 +34,7 @@ function i2b2_webclient() {
 	sed -i 's|loginDefaultPassword : \"demouser\"|loginDefaultPassword : \"\"|' "${DBUILD}${DWEBCLIENT}/js-i2b2/i2b2_ui_config.js"
 }
 
-function wildfly_download() {
+function download_wildfly() {
 	DWILDFLYHOME="$1"
 
 	wget "https://download.jboss.org/wildfly/${VWILDFLY}/wildfly-${VWILDFLY}.zip" -P "${DBUILD}"
@@ -40,7 +44,7 @@ function wildfly_download() {
 	mv "${DBUILD}/wildfly-${VWILDFLY}" "${DBUILD}${DWILDFLYHOME}"
 }
 
-function wildfly_systemd() {
+function init_wildfly_systemd() {
 	DWILDFLYHOME="$1"
 	DWILDFLYCONFIG="$2"
 	DSYSTEMD="$3"
@@ -51,7 +55,7 @@ function wildfly_systemd() {
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/launch.sh" "${DBUILD}${DWILDFLYHOME}/bin/"
 }
 
-function wildfly_config() {
+function config_wildfly() {
 	DWILDFLYHOME="$1"
 	DWILDFLYCONFIG="$2"
 
@@ -65,28 +69,34 @@ function wildfly_config() {
 	patch -p1 -d "${DBUILD}${DWILDFLYHOME}" < "${DRESOURCES}/standalone.xml.patch"
 }
 
-function wildfly_i2b2() {
+function download_wildfly_jdbc() {
 	DWILDFLYDEPLOYMENTS="$1"
-	# TODO load i2b2 from official sources
-	wget "https://www.aktin.org/software/repo/org/i2b2/${VI2B2}/i2b2.war" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
+
 	wget "https://jdbc.postgresql.org/download/postgresql-${VPOSTGRES_JDBC}.jar" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
-function postgresql_systemd() {
+function download_wildfly_i2b2() {
+	DWILDFLYDEPLOYMENTS="$1"
+
+	# TODO load i2b2 from official sources
+	wget "https://www.aktin.org/software/repo/org/i2b2/${VI2B2}/i2b2.war" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
+}
+
+function init_postgresql_systemd() {
 	DSYSTEMD="$1"
 
 	mkdir -p "${DBUILD}${DSYSTEMD}"
 	cp "${DRESOURCES}/postgresql.service" "${DBUILD}${DSYSTEMD}/"
 }
 
-function database_postinstall() {
+function move_database_for_postinstall() {
 	DDBPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDBPOSTINSTALL}")"
 	cp -r "${DRESOURCES}/database" "${DBUILD}${DDBPOSTINSTALL}"
 }
 
-function datasource_postinstall() {
+function move_datasource_for_postinstall() {
 	DDSPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDSPOSTINSTALL}")"
@@ -94,12 +104,14 @@ function datasource_postinstall() {
 }
 
 function build_linux() {
-	i2b2_webclient "/var/www/html/webclient"
-	wildfly_download "/opt/wildfly"
-	wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
-	wildfly_config "/opt/wildfly" "/etc/wildfly"
-	wildfly_i2b2 "/opt/wildfly/standalone/deployments"
-	postgresql_systemd "/lib/systemd/system"
-	database_postinstall "/usr/share/${PACKAGE}/database"
-	datasource_postinstall "/usr/share/${PACKAGE}/datasource"
+	download_i2b2_webclient "/var/www/html/webclient"
+	config_i2b2_webclient "/var/www/html/webclient"
+	download_wildfly "/opt/wildfly"
+	config_wildfly "/opt/wildfly" "/etc/wildfly"
+	init_wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
+	download_wildfly_jdbc "/opt/wildfly/standalone/deployments"
+	download_wildfly_i2b2 "/opt/wildfly/standalone/deployments"
+	init_postgresql_systemd "/lib/systemd/system"
+	move_database_for_postinstall "/usr/share/${PACKAGE}/database"
+	move_datasource_for_postinstall "/usr/share/${PACKAGE}/datasource"
 }
