@@ -38,8 +38,6 @@ move_datasource_for_postinstall "/wildfly/ds"
 mkdir -p "${DBUILD}/database"
 cp "${DIR}/database/Dockerfile" "${DBUILD}/database/"
 move_database_for_postinstall "/database/sql"
-cat "${DBUILD}/database/sql/i2b2_postgres_init.sql" >"${DBUILD}/database/sql/00_init.sql"
-cat "${DBUILD}/database/sql/i2b2_db.sql" >>"${DBUILD}/database/sql/00_init.sql"
 
 # Prepare apache2 docker
 mkdir -p "${DBUILD}/httpd"

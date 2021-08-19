@@ -20,7 +20,7 @@ rm -rf "${DIR}/build"
 . "$(dirname "${DIR}")/common/build.sh"
 build_linux
 
-# Move necessary resources to pre-package-build folder
+# Prepare package build
 mkdir -p "${DBUILD}/DEBIAN"
 sed -e "s/__PACKAGE__/${PACKAGE}/g" \
     -e "s/__VERSION__/${VERSION}/g" \
