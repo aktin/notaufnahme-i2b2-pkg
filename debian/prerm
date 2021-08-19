@@ -1,3 +1,3 @@
 #!/bin/bash
-systemctl stop wildfly || true
-systemctl disable wildfly || true
+systemctl stop wildfly.service || true
+systemctl disable wildfly.service || true
