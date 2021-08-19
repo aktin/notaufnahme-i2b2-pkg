@@ -13,7 +13,7 @@ case "$1" in
 			echo "Disabling apache2 php-curl extension ..."
 			sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
 		fi
-		systemctl restart apache2.service || true
+		systemctl restart apache2 || true
 
 		rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
 		rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}

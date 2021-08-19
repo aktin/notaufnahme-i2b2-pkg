@@ -50,17 +50,17 @@ function init_wildfly_systemd() {
 	DSYSTEMD="$3"
 
 	mkdir -p "${DBUILD}${DWILDFLYCONFIG}" "${DBUILD}${DSYSTEMD}"
-	cp "${DRESOURCES}/wildfly.service" "${DBUILD}${DSYSTEMD}/"
+	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.service" "${DBUILD}${DSYSTEMD}/"
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.conf" "${DBUILD}${DWILDFLYCONFIG}/"
+
+	echo "JBOSS_HOME=\"${DWILDFLYHOME}\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
+	echo "JBOSS_OPTS=\"-Djboss.http.port=9090 -Djrmboss.as.management.blocking.timeout=6000\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
+
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/launch.sh" "${DBUILD}${DWILDFLYHOME}/bin/"
 }
 
 function config_wildfly() {
 	DWILDFLYHOME="$1"
-	DWILDFLYCONFIG="$2"
-
-	echo "JBOSS_HOME=\"${DWILDFLYHOME}\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
-	echo "JBOSS_OPTS=\"-Djboss.http.port=9090 -Djrmboss.as.management.blocking.timeout=6000\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
 
 	# increases JVM heap size
 	sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/appclient.conf"
@@ -82,13 +82,6 @@ function download_wildfly_i2b2() {
 	wget "https://www.aktin.org/software/repo/org/i2b2/${VI2B2}/i2b2.war" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
-function init_postgresql_systemd() {
-	DSYSTEMD="$1"
-
-	mkdir -p "${DBUILD}${DSYSTEMD}"
-	cp "${DRESOURCES}/postgresql.service" "${DBUILD}${DSYSTEMD}/"
-}
-
 function move_database_for_postinstall() {
 	DDBPOSTINSTALL="$1"
 
@@ -107,11 +100,10 @@ function build_linux() {
 	download_i2b2_webclient "/var/www/html/webclient"
 	config_i2b2_webclient "/var/www/html/webclient"
 	download_wildfly "/opt/wildfly"
-	config_wildfly "/opt/wildfly" "/etc/wildfly"
+	config_wildfly "/opt/wildfly"
 	init_wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
 	download_wildfly_jdbc "/opt/wildfly/standalone/deployments"
 	download_wildfly_i2b2 "/opt/wildfly/standalone/deployments"
-	init_postgresql_systemd "/lib/systemd/system"
 	move_database_for_postinstall "/usr/share/${PACKAGE}/database"
 	move_datasource_for_postinstall "/usr/share/${PACKAGE}/datasource"
 }

@@ -20,7 +20,7 @@ else
 	echo -e "apache2 php-curl extension already enabled."
 fi
 echo "Restarting apache2 ..."
-systemctl restart apache2.service
+systemctl restart apache2
 
 # try connecting to postgresql
 PSQL=""
@@ -44,7 +44,7 @@ else
 fi
 
 WAITCOUNT=0
-while ! systemctl start postgresql.service 2>/dev/null; do
+while ! systemctl start postgresql 2>/dev/null; do
 	if [ $WAITCOUNT -lt 12 ]; then
 		echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
 		((WAITCOUNT++))
@@ -54,7 +54,7 @@ while ! systemctl start postgresql.service 2>/dev/null; do
 		exit 1
 	fi
 done
-systemctl enable postgresql.service
+systemctl enable postgresql
 
 # init and seed i2b2 database
 if  [[ $(eval "$PSQL -l" | grep "i2b2" | wc -l) == 0 ]]; then
@@ -89,5 +89,5 @@ chown -R wildfly:wildfly /opt/wildfly
 chown wildfly:wildfly /opt/wildfly/standalone/deployments/*
 
 systemctl daemon-reload
-systemctl enable wildfly.service
-systemctl start wildfly.service
+systemctl enable wildfly
+systemctl start wildfly
