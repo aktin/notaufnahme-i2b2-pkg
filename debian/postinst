@@ -68,6 +68,7 @@ else
 fi
 
 # set postgresql.service and wildfly.service to depend on each other
+# workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
 . "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
 add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
 add_entry_to_service "wildfly.service" "After" "postgresql.service"
