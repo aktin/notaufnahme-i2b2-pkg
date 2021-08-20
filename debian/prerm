@@ -1,3 +1,10 @@
 #!/bin/bash
 systemctl stop wildfly || true
 systemctl disable wildfly || true
+
+# remove postgresql dependency on wildfly.service
+. "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
+remove_entry_from_service "postgresql.service" "Requires" "wildfly.service"
+remove_entry_from_service "postgresql.service" "Before" "wildfly.service"
+
+systemctl daemon-reload
