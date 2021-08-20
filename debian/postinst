@@ -43,6 +43,7 @@ else
 	echo "Connecting to postgres via TCP/IP to $host:$port."
 fi
 
+# wait for postgresql connection
 WAITCOUNT=0
 while ! systemctl start postgresql 2>/dev/null; do
 	if [ $WAITCOUNT -lt 12 ]; then
