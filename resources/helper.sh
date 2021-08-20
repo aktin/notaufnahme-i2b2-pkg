@@ -5,17 +5,17 @@ function add_entry_to_service() {
 	SERVICE=/lib/systemd/system/$1
 	KEY=$2
 	VALUE=$3
-
-	line=$(grep -P "^$KEY=" $SERVICE)
-	if [[ -z $line ]];
-	then
-		sed -ri "/^\[Unit\]$/a $KEY=$VALUE" $SERVICE;
-	else
+    # workaround as grep returns null if key not found which leads to an error
+    if grep -q "^$KEY=" $SERVICE;
+    then
+        line=$(grep "^$KEY=" $SERVICE)
 		if [[ $line != *"$VALUE"* ]];
 		then
 			line+=" $VALUE"
 			sed -i "s/^$KEY=.*/$line/" $SERVICE;
 		fi
+	else
+		sed -ri "/^\[Unit\]$/a $KEY=$VALUE" $SERVICE;
 	fi
 }
 
@@ -24,16 +24,19 @@ function remove_entry_from_service() {
     SERVICE=/lib/systemd/system/$1
     KEY=$2
     VALUE=$3
-
-    line=$(grep -P "^$KEY=" $SERVICE)
-    if [[ $line == *"$VALUE"* ]];
+    # workaround as grep returns null if key not found which leads to an error
+    if grep -q "^$KEY=" $SERVICE;
     then
-        line=$(echo $line | sed -e "s/$VALUE//")
-        if [[ -z $(cut -d'=' -f2 <<< $line) ]];
+        line=$(grep "^$KEY=" $SERVICE)
+        if [[ $line == *"$VALUE"* ]];
         then
-            sed -i "/^$KEY=.*/d" $SERVICE;
-        else
-            sed -i "s/^$KEY=.*/$line/" $SERVICE;
+            line=$(echo $line | sed -e "s/$VALUE//")
+            if [[ -z $(cut -d'=' -f2 <<< $line) ]];
+            then
+                sed -i "/^$KEY=.*/d" $SERVICE;
+            else
+                sed -i "s/^$KEY=.*/$line/" $SERVICE;
+            fi
         fi
     fi
 }
