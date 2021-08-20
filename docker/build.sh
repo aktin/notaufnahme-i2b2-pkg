@@ -37,7 +37,7 @@ copy_datasource_for_postinstall "/wildfly/ds"
 # Prepapare postgresql docker
 mkdir -p "${DBUILD}/database"
 cp "${DIR}/database/Dockerfile" "${DBUILD}/database/"
-move_database_for_postinstall "/database/sql"
+copy_database_for_postinstall "/database/sql"
 
 # Prepare apache2 docker
 mkdir -p "${DBUILD}/httpd"
