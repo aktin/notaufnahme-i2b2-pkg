@@ -96,6 +96,13 @@ function move_datasource_for_postinstall() {
 	cp -r "${DRESOURCES}/datasource" "${DBUILD}${DDSPOSTINSTALL}"
 }
 
+function move_helper_functions_for_postinstall() {
+	DHELPERPOSTINSTALL="$1"
+
+	mkdir -p "$(dirname "${DBUILD}${DHELPERPOSTINSTALL}")"
+	cp "${DRESOURCES}/helper.sh" "${DBUILD}${DHELPERPOSTINSTALL}"
+}
+
 function build_linux() {
 	download_i2b2_webclient "/var/www/html/webclient"
 	config_i2b2_webclient "/var/www/html/webclient"
@@ -106,4 +113,5 @@ function build_linux() {
 	download_wildfly_i2b2 "/opt/wildfly/standalone/deployments"
 	move_database_for_postinstall "/usr/share/${PACKAGE}/database"
 	move_datasource_for_postinstall "/usr/share/${PACKAGE}/datasource"
+	move_helper_functions_for_postinstall "/usr/share/${PACKAGE}"
 }
