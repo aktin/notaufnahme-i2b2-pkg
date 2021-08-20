@@ -82,21 +82,21 @@ function download_wildfly_i2b2() {
 	wget "https://www.aktin.org/software/repo/org/i2b2/${VI2B2}/i2b2.war" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
-function move_database_for_postinstall() {
+function copy_database_for_postinstall() {
 	DDBPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDBPOSTINSTALL}")"
 	cp -r "${DRESOURCES}/database" "${DBUILD}${DDBPOSTINSTALL}"
 }
 
-function move_datasource_for_postinstall() {
+function copy_datasource_for_postinstall() {
 	DDSPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDSPOSTINSTALL}")"
 	cp -r "${DRESOURCES}/datasource" "${DBUILD}${DDSPOSTINSTALL}"
 }
 
-function move_helper_functions_for_postinstall() {
+function copy_helper_functions_for_postinstall() {
 	DHELPERPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DHELPERPOSTINSTALL}")"
@@ -111,7 +111,7 @@ function build_linux() {
 	init_wildfly_systemd "/opt/wildfly" "/etc/wildfly" "/lib/systemd/system"
 	download_wildfly_jdbc "/opt/wildfly/standalone/deployments"
 	download_wildfly_i2b2 "/opt/wildfly/standalone/deployments"
-	move_database_for_postinstall "/usr/share/${PACKAGE}/database"
-	move_datasource_for_postinstall "/usr/share/${PACKAGE}/datasource"
-	move_helper_functions_for_postinstall "/usr/share/${PACKAGE}"
+	copy_database_for_postinstall "/usr/share/${PACKAGE}/database"
+	copy_datasource_for_postinstall "/usr/share/${PACKAGE}/datasource"
+	copy_helper_functions_for_postinstall "/usr/share/${PACKAGE}"
 }
