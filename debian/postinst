@@ -22,7 +22,7 @@ fi
 echo "Restarting apache2 ..."
 systemctl restart apache2
 
-# try connecting to postgresql
+# select postgresql connection method
 PSQL=""
 db_get $DEBCONF_NAME/db_conn
 if [ "$RET" = "unix" ]; then
