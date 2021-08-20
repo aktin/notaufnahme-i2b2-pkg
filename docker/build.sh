@@ -32,7 +32,7 @@ cp "${DIR}/wildfly/entrypoint.sh" "${DBUILD}/wildfly/"
 cp "${DRESOURCES}/standalone.xml.patch" "${DBUILD}/wildfly/"
 download_wildfly_i2b2 "/wildfly"
 download_wildfly_jdbc "/wildfly"
-move_datasource_for_postinstall "/wildfly/ds"
+copy_datasource_for_postinstall "/wildfly/ds"
 
 # Prepapare postgresql docker
 mkdir -p "${DBUILD}/database"
