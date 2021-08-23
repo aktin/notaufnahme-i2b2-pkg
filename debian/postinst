@@ -19,13 +19,10 @@ if [[ -n $(grep ";extension=curl" /etc/php/*/apache2/php.ini) ]]; then
 else
 	echo -e "apache2 php-curl extension already enabled."
 fi
-echo "Enabling apache2 proxy_http module ..."
-a2enmod proxy_http >/dev/null || true
-a2enconf aktin-j2ee-reverse-proxy >/dev/null || true
 echo "Restarting apache2 ..."
 systemctl restart apache2
 
-# count databases with name i2b2
+# select postgresql connection method
 PSQL=""
 db_get $DEBCONF_NAME/db_conn
 if [ "$RET" = "unix" ]; then
@@ -46,8 +43,9 @@ else
 	echo "Connecting to postgres via TCP/IP to $host:$port."
 fi
 
+# wait for postgresql connection
 WAITCOUNT=0
-while ! systemctl start postgresql.service 2>/dev/null; do
+while ! systemctl start postgresql 2>/dev/null; do
 	if [ $WAITCOUNT -lt 12 ]; then
 		echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
 		((WAITCOUNT++))
@@ -57,8 +55,9 @@ while ! systemctl start postgresql.service 2>/dev/null; do
 		exit 1
 	fi
 done
-systemctl enable postgresql.service
+systemctl enable postgresql
 
+# init and seed i2b2 database
 if  [[ $(eval "$PSQL -l" | grep "i2b2" | wc -l) == 0 ]]; then
 	echo -e "Creating i2b2 database and users ..."
 	eval "$PSQL -v ON_ERROR_STOP=1 -f /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/database/i2b2_postgres_init.sql" >/dev/null
@@ -68,6 +67,15 @@ else
 	echo -e "i2b2 database already exists. Skipping ..."
 fi
 
+# set postgresql.service and wildfly.service to depend on each other
+# workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
+. "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
+add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
+add_entry_to_service "wildfly.service" "After" "postgresql.service"
+add_entry_to_service "postgresql.service" "Requires" "wildfly.service"
+add_entry_to_service "postgresql.service" "Before" "wildfly.service"
+
+# deploy datasources
 sed -e "s/__HOST__/$host/g" \
     -e "s/__PORT__/$port/g" \
     /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
@@ -84,9 +92,11 @@ sed -e "s/__HOST__/$host/g" \
     -e "s/__PORT__/$port/g" \
     /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
 
+# create wildfly user and set permissions
 id -u wildfly >/dev/null || adduser --system --group --disabled-login --home /var/lib/wildfly wildfly
 chown -R wildfly:wildfly /opt/wildfly
+chown wildfly:wildfly /opt/wildfly/standalone/deployments/*
+
 systemctl daemon-reload
 systemctl enable wildfly
 systemctl start wildfly
-

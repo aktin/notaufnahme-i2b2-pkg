@@ -5,23 +5,14 @@ set -e
 
 case "$1" in
 	remove)
-		db_input high $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_proxy_http || true
 		db_input high $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl || true
 		db_go || true
-		db_fset $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_proxy_http seen false
 		db_fset $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl seen false
-
-		db_get $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_proxy_http
-		if [ "$RET" = "Yes" ]; then
-			echo "Disabling apache2 proxy_http module ..."
-			a2dismod proxy_http >/dev/null || true
-		fi
 		db_get $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl
 		if [ "$RET" = "Yes" ]; then
 			echo "Disabling apache2 php-curl extension ..."
 			sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
 		fi
-		a2disconf aktin-j2ee-reverse-proxy >/dev/null 2>&1 || true
 		systemctl restart apache2 || true
 
 		rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
@@ -55,4 +46,3 @@ EOF
 		db_purge
 		;;
 esac
-

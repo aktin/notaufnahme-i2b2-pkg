@@ -7,4 +7,3 @@ Depends: debconf (>= 0.2.26), curl, sudo, libpq-dev, software-properties-common,
 Recommends: postgresql-12
 Maintainer: AKTIN IT <it-support@aktin.org>
 Description: I2B2 Installation für das AKTIN Datawarehouse in Notaufnahmen
-

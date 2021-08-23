@@ -2,8 +2,7 @@
 
 <!-- datasource configuration to connect wildfly server with i2b2.i2b2pmdata in postgres -->
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema">
-        <datasource jta="false" jndi-name="java:/PMBootStrapDS"
-                pool-name="PMBootStrapDS" enabled="true" use-ccm="false">
+        <datasource jta="false" jndi-name="java:/PMBootStrapDS" pool-name="PMBootStrapDS" enabled="true" use-ccm="false">
                 <connection-url>jdbc:postgresql://__HOST__:__PORT__/i2b2?searchPath=i2b2pm</connection-url>
                 <driver-class>org.postgresql.Driver</driver-class>
                 <driver>postgresql-42.2.8.jar</driver>
@@ -24,4 +23,3 @@
                 </statement>
         </datasource>
 </datasources>
-
