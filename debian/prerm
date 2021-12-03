@@ -7,4 +7,7 @@ systemctl disable wildfly || true
 remove_entry_from_service "postgresql.service" "Requires" "wildfly.service"
 remove_entry_from_service "postgresql.service" "Before" "wildfly.service"
 
+# remove update hold for postgresql-12
+sed '/Package: postgresql-12/{N;N;d;}' /etc/apt/preferences.d/official-package-repositories.pref
+
 systemctl daemon-reload

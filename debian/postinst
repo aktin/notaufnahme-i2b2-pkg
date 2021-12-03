@@ -67,13 +67,18 @@ else
 	echo -e "i2b2 database already exists. Skipping ..."
 fi
 
-# set postgresql.service and wildfly.service to depend on each other
+# set wildfly.service to depend on postgresql.service
 # workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
 . "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
 add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
 add_entry_to_service "wildfly.service" "After" "postgresql.service"
-add_entry_to_service "postgresql.service" "Requires" "wildfly.service"
-add_entry_to_service "postgresql.service" "Before" "wildfly.service"
+
+# stop updates for postgresql-12. Keep this lines until new cda-importer is finished
+cat <<EOF >> "/etc/apt/preferences.d/official-package-repositories.pref"
+Package: postgresql-12 postgresql-client-12 postgresql-common postgresql-client-common
+Pin: release o=Ubuntu
+Pin-Priority: -1
+EOF
 
 # deploy datasources
 sed -e "s/__HOST__/$host/g" \
