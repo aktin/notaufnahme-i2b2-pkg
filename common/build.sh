@@ -64,7 +64,10 @@ function config_wildfly() {
 
 	# increases JVM heap size
 	sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/appclient.conf"
-	sed -i 's/-Xms64m -Xmx512m/-Xms1014m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/standalone.conf"
+	sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/standalone.conf"
+
+	# fix CVE-2021-44228 (log4j2 vulnerability)
+	echo 'JAVA_OPTS="$JAVA_OPTS -Dlog4j2.formatMsgNoLookups=true"' >> "${DBUILD}${DWILDFLYHOME}/bin/standalone.conf"
 
 	patch -p1 -d "${DBUILD}${DWILDFLYHOME}" < "${DRESOURCES}/standalone.xml.patch"
 }
