@@ -54,7 +54,6 @@ function init_wildfly_systemd() {
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.conf" "${DBUILD}${DWILDFLYCONFIG}/"
 
 	echo "JBOSS_HOME=\"${DWILDFLYHOME}\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
-	echo "JBOSS_OPTS=\"-Djboss.http.port=9090 -Djrmboss.as.management.blocking.timeout=6000\"" >> "${DBUILD}${DWILDFLYCONFIG}/wildfly.conf"
 
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/launch.sh" "${DBUILD}${DWILDFLYHOME}/bin/"
 }
