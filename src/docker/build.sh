@@ -47,6 +47,12 @@ config_i2b2_webclient "/httpd/i2b2webclient"
 
 # Run docker-compose
 if [ "${FULL}" = "full" ]; then
+
+	# Clean up old images
+	docker image rm ${I2B2IMAGENAMESPACE}database
+	docker image rm ${I2B2IMAGENAMESPACE}wildfly
+	docker image rm ${I2B2IMAGENAMESPACE}httpd
+
 	cwd="$(pwd)"
 	cd "${DIR}"
 	docker-compose build

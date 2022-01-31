@@ -6,6 +6,7 @@ USER jboss
 
 RUN sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' /opt/jboss/wildfly/bin/appclient.conf
 RUN sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' /opt/jboss/wildfly/bin/standalone.conf
+RUN echo 'JAVA_OPTS="$JAVA_OPTS -Dlog4j2.formatMsgNoLookups=true"' >>  /opt/jboss/wildfly/bin/standalone.conf
 
 COPY ./standalone.xml.patch /opt/jboss/wildfly
 RUN patch -p1 -d /opt/jboss/wildfly < /opt/jboss/wildfly/standalone.xml.patch

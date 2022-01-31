@@ -10,7 +10,7 @@ if [ -z "${DBUILD}" ]; then echo "\$DBUILD is empty."; exit 1; fi
 DRESOURCES="$( cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" &> /dev/null && pwd )/resources"
 
 set -a
-. "${DRESOURCES}/versions"
+. "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/versions"
 set +a
 
 mkdir -p "${DBUILD}"
