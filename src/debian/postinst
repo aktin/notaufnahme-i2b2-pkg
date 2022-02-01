@@ -130,4 +130,3 @@ case "$1" in
 		systemctl daemon-reload
 		;;
 esac
-

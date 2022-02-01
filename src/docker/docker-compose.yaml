@@ -1,11 +1,13 @@
-version: "3"
 services:
   database:
     image: ${I2B2IMAGENAMESPACE}database
-    build: ./build/database
+    build: 
+      context: ./build/database
   httpd:
     image: ${I2B2IMAGENAMESPACE}httpd
-    build: ./build/httpd
+    build: 
+      context: ./build/httpd
   wildfly:
     image: ${I2B2IMAGENAMESPACE}wildfly
-    build: ./build/wildfly
+    build: 
+      context: ./build/wildfly
