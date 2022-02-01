@@ -24,14 +24,3 @@ Template: __DWH_SHARED__/db_pass
 Type: password
 Default: localhost
 Description: What ist the password for your PostgreSQL Server?
-
-Template: __PACKAGE__/dis_apache2_php_curl
-Type: select
-Choices: Yes, No
-Default: Yes
-Description: Do you want to disable it now?
- During installation the apache2 php-curl extension was enabled.
- .
- WARNING: There might be other services which might need this extension.
- .
- You can re-enable it with `sed -i 's/;extension=curl/extension=curl/' /etc/php/*/apache2/php.ini`.

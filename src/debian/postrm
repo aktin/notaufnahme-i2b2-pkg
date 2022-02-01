@@ -1,48 +1,73 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 . /usr/share/debconf/confmodule
 
-case "$1" in
-	remove)
-		db_input high $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl || true
-		db_go || true
-		db_fset $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl seen false
-		db_get $DPKG_MAINTSCRIPT_PACKAGE/dis_apache2_php_curl
-		if [ "$RET" = "Yes" ]; then
-			echo "Disabling apache2 php-curl extension ..."
-			sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
-		fi
-		systemctl restart apache2 || true
+function deactivate_php_curl_extension() {
+	echo "Disabling apache2 php-curl extension ..."
+	sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
+	systemctl restart apache2 || true
+}
 
-		rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
-		rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}
-		rm -f /opt/wildfly/standalone/deployments/{crc,im,ont,pm,work}-ds.xml
-		;;
-	purge)
-		DWH_SHARED=$(echo $DPKG_MAINTSCRIPT_PACKAGE | awk -F '-' '{print $1"-"$2}')
-		PSQL=""
-		db_get $DWH_SHARED/db_conn
-		if [ "$RET" = "unix" ]; then
-			PSQL="sudo -u postgres psql"
-			echo "Connecting to postgres via local unix socket."
-		else
-			db_get $DWH_SHARED/db_host
-			host="$RET"
-			db_get $DWH_SHARED/db_port
-			port="$RET"
-			db_get $DWH_SHARED/db_user
-			user="$RET"
-			db_get $DWH_SHARED/db_pass
-			pass="$RET"
-			PSQL="psql postgresql://$user:$pass@$host:$port?sslmode=require"
-			echo "Connecting to postgres via TCP/IP to $host:$port."
-		fi
-		echo "Dropping I2B2 database ..."
-		eval "$PSQL -v ON_ERROR_STOP=1" <<EOF >/dev/null
+function enable_psql_updates() {
+	echo -e "Enabling postgresql-12 unattendend-upgrades ..."
+    sed -i '/Package: postgresql-12/{N;N;d;}' /etc/apt/preferences.d/official-package-repositories.pref
+}
+
+function delete_wildfly_remnants() {
+	echo -e "Deleting remnants of wildfly ..."
+	rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
+	rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}
+	rm -f /opt/wildfly/standalone/deployments/{crc,im,ont,pm,work}-ds.xml
+}
+
+function delete_wildfly_user() {
+	echo -e "Deleting wildfly user..."
+	if id -u wildfly &>/dev/null; then 
+		deluser --remove-home --force wildfly;
+	else
+		echo -e "User wildfly is already deleted";
+	fi
+}
+
+function select_psql_connection_method() {
+	DWH_SHARED=$(echo $DPKG_MAINTSCRIPT_PACKAGE | awk -F '-' '{print $1"-"$2}')
+	db_get $DWH_SHARED/db_conn
+	if [ "$RET" = "unix" ]; then
+		readonly PSQL="sudo -u postgres psql"
+		echo "Connecting to postgres via local unix socket."
+	else
+		db_get $DWH_SHARED/db_host
+		HOST="$RET"
+		db_get $DWH_SHARED/db_port
+		PORT="$RET"
+		db_get $DWH_SHARED/db_user
+		USER="$RET"
+		db_get $DWH_SHARED/db_pass
+		PASS="$RET"
+		readonly PSQL="psql postgresql://$USER:$PASS@$HOST:$PORT?sslmode=require"
+		echo "Connecting to postgres via TCP/IP to $HOST:$PORT."
+	fi
+}
+
+function drop_i2b2_database() {
+	echo "Dropping I2B2 database ..."
+	eval "$PSQL -v ON_ERROR_STOP=1" <<EOF >/dev/null
 __I2B2_DROP__
 
 EOF
-		db_purge
+	db_purge
+}
+
+case "$1" in
+	remove)
+		deactivate_php_curl_extension
+		enable_psql_updates
+		delete_wildfly_remnants
+		delete_wildfly_user
+		;;
+	purge)
+		select_psql_connection_method
+		drop_i2b2_database
 		;;
 esac
