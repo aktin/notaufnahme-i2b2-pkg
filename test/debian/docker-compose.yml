@@ -1,0 +1,16 @@
+services:
+  testimage:
+    tty: true
+    container_name: testcontainer
+    image: testimage
+    build:
+      context: ./
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tmpfs:
+      - /tmp
+      - /run
+      - /run/lock
+    privileged: true
+    network_mode: host
+    
