@@ -4,9 +4,6 @@ set -euo pipefail
 readonly RES='\e[0m'
 readonly BRED='\e[1;31m'
 
-. /usr/share/debconf/confmodule
-DEBCONF_NAME=$(echo $DPKG_MAINTSCRIPT_PACKAGE | awk -F '-' '{print $1"-"$2}')
-
 function activate_php_curl_extension() {
 	if [[ -n $(grep ";extension=curl" /etc/php/*/apache2/php.ini) ]]; then
 		echo -e "Enabling apache2 php-curl extension ..."
@@ -18,25 +15,11 @@ function activate_php_curl_extension() {
 	systemctl restart apache2
 }
 
-function select_psql_connection_method() {
-	db_get $DEBCONF_NAME/db_conn
-	if [ "$RET" = "unix" ]; then
-		readonly HOST="localhost"
-		readonly PORT="5432"
-		readonly PSQL="sudo -u postgres psql"
-		echo "Connecting to postgres via local unix socket."
-	else
-		db_get $DEBCONF_NAME/db_host
-		readonly HOST="$RET"
-		db_get $DEBCONF_NAME/db_port
-		readonly PORT="$RET"
-		db_get $DEBCONF_NAME/db_user
-		USER="$RET"
-		db_get $DEBCONF_NAME/db_pass
-		PASS="$RET"
-		readonly PSQL="psql postgresql://$USER:$PASS@$HOST:$PORT?sslmode=require"
-		echo "Connecting to postgres via TCP/IP to $HOST:$PORT."
-	fi
+function connect_to_psql() {
+	echo "Connecting to postgres via local unix socket."
+	readonly HOST="localhost"
+	readonly PORT="5432"
+	readonly PSQL="sudo -u postgres psql"
 }
 
 function wait_for_psql_connection() {
@@ -112,7 +95,7 @@ case "$1" in
 	configure)
 		activate_php_curl_extension
 		systemctl enable apache2
-		select_psql_connection_method
+		connect_to_psql
 		wait_for_psql_connection
 		init_and_seed_i2b2_databse
 		disable_psql_updates

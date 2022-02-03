@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-. /usr/share/debconf/confmodule
-
 function deactivate_php_curl_extension() {
 	echo "Disabling apache2 php-curl extension ..."
 	sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
@@ -30,29 +28,9 @@ function delete_wildfly_user() {
 	fi
 }
 
-function select_psql_connection_method() {
-	DWH_SHARED=$(echo $DPKG_MAINTSCRIPT_PACKAGE | awk -F '-' '{print $1"-"$2}')
-	db_get $DWH_SHARED/db_conn
-	if [ "$RET" = "unix" ]; then
-		readonly PSQL="sudo -u postgres psql"
-		echo "Connecting to postgres via local unix socket."
-	else
-		db_get $DWH_SHARED/db_host
-		HOST="$RET"
-		db_get $DWH_SHARED/db_port
-		PORT="$RET"
-		db_get $DWH_SHARED/db_user
-		USER="$RET"
-		db_get $DWH_SHARED/db_pass
-		PASS="$RET"
-		readonly PSQL="psql postgresql://$USER:$PASS@$HOST:$PORT?sslmode=require"
-		echo "Connecting to postgres via TCP/IP to $HOST:$PORT."
-	fi
-}
-
 function drop_i2b2_database() {
 	echo "Dropping I2B2 database ..."
-	eval "$PSQL -v ON_ERROR_STOP=1" <<EOF >/dev/null
+	eval "sudo -u postgres psql -v ON_ERROR_STOP=1" <<EOF >/dev/null
 __I2B2_DROP__
 
 EOF
@@ -67,7 +45,6 @@ case "$1" in
 		delete_wildfly_user
 		;;
 	purge)
-		select_psql_connection_method
 		drop_i2b2_database
 		;;
 esac

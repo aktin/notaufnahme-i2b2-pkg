@@ -36,9 +36,6 @@ mkdir -p "${DBUILD}/DEBIAN"
 sed -e "s/__PACKAGE__/${PACKAGE}/g" \
     -e "s/__VERSION__/${VERSION}/g" \
     "${DIR}/control" > "${DBUILD}/DEBIAN/control"
-sed -e "s/__DWH_SHARED__/$(echo "${PACKAGE}" | awk -F '-' '{print $1"-"$2}')/g" \
-    -e "s/__PACKAGE__/${PACKAGE}/g" \
-    "${DIR}/templates" > "${DBUILD}/DEBIAN/templates"
 cp "${DIR}/config" "${DBUILD}/DEBIAN/"
 cp "${DIR}/postinst" "${DBUILD}/DEBIAN/"
 cp "${DIR}/prerm" "${DBUILD}/DEBIAN/"
