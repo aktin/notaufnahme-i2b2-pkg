@@ -5,8 +5,6 @@ PACKAGE="aktin-notaufnahme-i2b2"
 
 # Required parameter
 VERSION="${1}"
-
-# Check if variables are empty
 if [ -z "${VERSION}" ]; then echo "\$VERSION is empty."; exit 1; fi
 
 # Directory this script is located in

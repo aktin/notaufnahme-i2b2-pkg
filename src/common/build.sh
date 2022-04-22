@@ -6,7 +6,7 @@ if [ -z "${PACKAGE}" ]; then echo "\$PACKAGE is empty."; exit 1; fi
 if [ -z "${VERSION}" ]; then echo "\$VERSION is empty."; exit 1; fi
 if [ -z "${DBUILD}" ]; then echo "\$DBUILD is empty."; exit 1; fi
 
-# Superdirectory this script is located in + /resources
+# Superdirectory this script is located in + /resources, namely src/resources
 DRESOURCES="$( cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" &> /dev/null && pwd )/resources"
 
 set -a
