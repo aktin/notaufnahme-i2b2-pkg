@@ -2,40 +2,42 @@
 
 # only for keys within [UNIT]
 function add_entry_to_service() {
-	SERVICE=/lib/systemd/system/$1
-	KEY=$2
-	VALUE=$3
+    set -euo pipefail
+	local SERVICE="/lib/systemd/system/$1"
+	local KEY="$2"
+	local VALUE="$3"
     # workaround as grep returns null if key not found which leads to an error
-    if grep -q "^$KEY=" $SERVICE;
+    if grep -q "^${KEY}=" "${SERVICE}";
     then
-        line=$(grep "^$KEY=" $SERVICE)
-		if [[ $line != *"$VALUE"* ]];
+        LINE="$(grep "^${KEY}=" "${SERVICE}")"
+		if [[ "${LINE}" != *"${VALUE}"* ]];
 		then
-			line+=" $VALUE"
-			sed -i "s/^$KEY=.*/$line/" $SERVICE;
+			LINE+=" ${VALUE}"
+			sed -i "s/^${KEY}=.*/${LINE}/" "${SERVICE}";
 		fi
 	else
-		sed -ri "/^\[Unit\]$/a $KEY=$VALUE" $SERVICE;
+		sed -ri "/^\[Unit\]$/a ${KEY}=${VALUE}" "${SERVICE}";
 	fi
 }
 
 # only for keys within [UNIT]
 function remove_entry_from_service() {
-    SERVICE=/lib/systemd/system/$1
-    KEY=$2
-    VALUE=$3
+    set -euo pipefail
+	SERVICE="/lib/systemd/system/$1"
+	KEY="$2"
+	VALUE="$3"
     # workaround as grep returns null if key not found which leads to an error
-    if grep -q "^$KEY=" $SERVICE;
+    if grep -q "^${KEY}=" "${SERVICE}";
     then
-        line=$(grep "^$KEY=" $SERVICE)
-        if [[ $line == *"$VALUE"* ]];
+        LINE=$(grep "^${KEY}=" "${SERVICE}")
+        if [[ "${LINE}" == *"${VALUE}"* ]];
         then
-            line=$(echo $line | sed -e "s/$VALUE//")
-            if [[ -z $(cut -d'=' -f2 <<< $line) ]];
+            LINE="$(echo ${LINE} | sed -e "s/${VALUE}//")"
+            if [[ -z "$(cut -d'=' -f2 <<< ${LINE})" ]];
             then
-                sed -i "/^$KEY=.*/d" $SERVICE;
+                sed -i "/^${KEY}=.*/d" "${SERVICE}";
             else
-                sed -i "s/^$KEY=.*/$line/" $SERVICE;
+                sed -i "s/^${KEY}=.*/${LINE}/" "${SERVICE}";
             fi
         fi
     fi

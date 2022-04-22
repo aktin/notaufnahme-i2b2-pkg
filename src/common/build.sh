@@ -7,16 +7,22 @@ if [ -z "${VERSION}" ]; then echo "\$VERSION is empty."; exit 1; fi
 if [ -z "${DBUILD}" ]; then echo "\$DBUILD is empty."; exit 1; fi
 
 # Superdirectory this script is located in + /resources, namely src/resources
-DRESOURCES="$( cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" &> /dev/null && pwd )/resources"
+readonly DRESOURCES="$( cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" &> /dev/null && pwd )/resources"
 
-set -a
-. "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/versions"
-set +a
+function init_build_environment() {
+	set -a
+	. "$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/versions"
+	set +a
 
-mkdir -p "${DBUILD}"
+	mkdir -p "${DBUILD}"
+}
+
+function clean_up_build_environment() {
+	rm -rf "${DBUILD}"
+}
 
 function download_i2b2_webclient() {
-	DWEBCLIENT="${1}"
+	local DWEBCLIENT="${1}"
 
 	wget "https://github.com/i2b2/i2b2-webclient/archive/v${VI2B2_WEBCLIENT}.zip" -P "${DBUILD}"
 	unzip "${DBUILD}/v${VI2B2_WEBCLIENT}.zip" -d "${DBUILD}"
@@ -26,7 +32,7 @@ function download_i2b2_webclient() {
 }
 
 function config_i2b2_webclient() {
-	DWEBCLIENT="${1}"
+	local DWEBCLIENT="${1}"
 
 	sed -i 's|name: \"HarvardDemo\",|name: \"AKTIN\",|' "${DBUILD}${DWEBCLIENT}/i2b2_config_data.js"
 	sed -i 's|urlCellPM: \"http://services.i2b2.org/i2b2/services/PMService/\",|urlCellPM: \"http://127.0.0.1:9090/i2b2/services/PMService/\",|' "${DBUILD}${DWEBCLIENT}/i2b2_config_data.js"
@@ -35,7 +41,7 @@ function config_i2b2_webclient() {
 }
 
 function download_wildfly() {
-	DWILDFLYHOME="$1"
+	local DWILDFLYHOME="$1"
 
 	wget "https://download.jboss.org/wildfly/${VWILDFLY}/wildfly-${VWILDFLY}.zip" -P "${DBUILD}"
 	unzip "${DBUILD}/wildfly-${VWILDFLY}.zip" -d "${DBUILD}"
@@ -45,9 +51,9 @@ function download_wildfly() {
 }
 
 function init_wildfly_systemd() {
-	DWILDFLYHOME="$1"
-	DWILDFLYCONFIG="$2"
-	DSYSTEMD="$3"
+	local DWILDFLYHOME="$1"
+	local DWILDFLYCONFIG="$2"
+	local DSYSTEMD="$3"
 
 	mkdir -p "${DBUILD}${DWILDFLYCONFIG}" "${DBUILD}${DSYSTEMD}"
 	cp "${DBUILD}${DWILDFLYHOME}/docs/contrib/scripts/systemd/wildfly.service" "${DBUILD}${DSYSTEMD}/"
@@ -59,7 +65,7 @@ function init_wildfly_systemd() {
 }
 
 function config_wildfly() {
-	DWILDFLYHOME="$1"
+	local DWILDFLYHOME="$1"
 
 	# increases JVM heap size
 	sed -i 's/-Xms64m -Xmx512m/-Xms1024m -Xmx2g/' "${DBUILD}${DWILDFLYHOME}/bin/appclient.conf"
@@ -72,34 +78,34 @@ function config_wildfly() {
 }
 
 function download_wildfly_jdbc() {
-	DWILDFLYDEPLOYMENTS="$1"
+	local DWILDFLYDEPLOYMENTS="$1"
 
 	wget "https://jdbc.postgresql.org/download/postgresql-${VPOSTGRES_JDBC}.jar" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
 function download_wildfly_i2b2() {
-	DWILDFLYDEPLOYMENTS="$1"
+	local DWILDFLYDEPLOYMENTS="$1"
 
 	# TODO load i2b2 from official sources
 	wget "https://www.aktin.org/software/repo/org/i2b2/${VI2B2}/i2b2.war" -P "${DBUILD}${DWILDFLYDEPLOYMENTS}"
 }
 
 function copy_database_for_postinstall() {
-	DDBPOSTINSTALL="$1"
+	local DDBPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDBPOSTINSTALL}")"
 	cp -r "${DRESOURCES}/database" "${DBUILD}${DDBPOSTINSTALL}"
 }
 
 function copy_datasource_for_postinstall() {
-	DDSPOSTINSTALL="$1"
+	local DDSPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DDSPOSTINSTALL}")"
 	cp -r "${DRESOURCES}/datasource" "${DBUILD}${DDSPOSTINSTALL}"
 }
 
 function copy_helper_functions_for_postinstall() {
-	DHELPERPOSTINSTALL="$1"
+	local DHELPERPOSTINSTALL="$1"
 
 	mkdir -p "$(dirname "${DBUILD}${DHELPERPOSTINSTALL}")"
 	cp "${DRESOURCES}/helper.sh" "${DBUILD}${DHELPERPOSTINSTALL}"

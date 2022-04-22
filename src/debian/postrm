@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 function deactivate_php_curl_extension() {
 	echo "Disabling apache2 php-curl extension ..."
@@ -37,14 +36,19 @@ EOF
 	db_purge
 }
 
-case "$1" in
-	remove)
-		deactivate_php_curl_extension
-		enable_psql_updates
-		delete_wildfly_remnants
-		delete_wildfly_user
-		;;
-	purge)
-		drop_i2b2_database
-		;;
-esac
+function main() {
+	set -euo pipefail
+	case "$1" in
+		remove)
+			deactivate_php_curl_extension
+			enable_psql_updates
+			delete_wildfly_remnants
+			delete_wildfly_user
+			;;
+		purge)
+			drop_i2b2_database
+			;;
+	esac
+}
+
+main

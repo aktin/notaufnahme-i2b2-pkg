@@ -23,7 +23,7 @@ function connect_to_psql() {
 }
 
 function wait_for_psql_connection() {
-	WAITCOUNT=0
+	local WAITCOUNT=0
 	while ! systemctl start postgresql 2>/dev/null; do
 		if [ $WAITCOUNT -lt 12 ]; then
 			echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
@@ -71,21 +71,11 @@ function set_wildfly_service_dependency() {
 
 function deploy_datasources() {
 	echo -e "Deploying i2b2 datasources ..."
-	sed -e "s/__HOST__/$HOST/g" \
-		-e "s/__PORT__/$PORT/g" \
-		/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
-	sed -e "s/__HOST__/$HOST/g" \
-		-e "s/__PORT__/$PORT/g" \
-		/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/im-ds.xml > /opt/wildfly/standalone/deployments/im-ds.xml
-	sed -e "s/__HOST__/$HOST/g" \
-		-e "s/__PORT__/$PORT/g" \
-		/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/ont-ds.xml > /opt/wildfly/standalone/deployments/ont-ds.xml
-	sed -e "s/__HOST__/$HOST/g" \
-		-e "s/__PORT__/$PORT/g" \
-		/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/pm-ds.xml > /opt/wildfly/standalone/deployments/pm-ds.xml
-	sed -e "s/__HOST__/$HOST/g" \
-		-e "s/__PORT__/$PORT/g" \
-		/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
+	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
+	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/im-ds.xml > /opt/wildfly/standalone/deployments/im-ds.xml
+	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/ont-ds.xml > /opt/wildfly/standalone/deployments/ont-ds.xml
+	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/pm-ds.xml > /opt/wildfly/standalone/deployments/pm-ds.xml
+	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
 }
 
 function create_wildfly_user() {
@@ -95,25 +85,30 @@ function create_wildfly_user() {
 	chown wildfly:wildfly /opt/wildfly/standalone/deployments/*
 }
 
-case "$1" in
-	configure)
-		activate_php_curl_extension
-		systemctl enable apache2
-		connect_to_psql
-		wait_for_psql_connection
-		init_and_seed_i2b2_databse
-		disable_psql_updates
-		systemctl enable postgresql
-		set_wildfly_service_dependency
-		deploy_datasources
-		create_wildfly_user
-		systemctl enable wildfly
-		systemctl start wildfly
-		systemctl daemon-reload
-		;;
-	abort-remove)
-		systemctl enable wildfly || true
-		systemctl start wildfly || true
-		systemctl daemon-reload
-		;;
-esac
+function main() {
+	set -euo pipefail
+	case "$1" in
+		configure)
+			activate_php_curl_extension
+			systemctl enable apache2
+			connect_to_psql
+			wait_for_psql_connection
+			init_and_seed_i2b2_databse
+			disable_psql_updates
+			systemctl enable postgresql
+			set_wildfly_service_dependency
+			deploy_datasources
+			create_wildfly_user
+			systemctl enable wildfly
+			systemctl start wildfly
+			systemctl daemon-reload
+			;;
+		abort-remove)
+			systemctl enable wildfly || true
+			systemctl start wildfly || true
+			systemctl daemon-reload
+			;;
+	esac
+}
+
+main
