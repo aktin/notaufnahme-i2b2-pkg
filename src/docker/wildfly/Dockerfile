@@ -1,5 +1,8 @@
 FROM jboss/wildfly:__VWILDFLY__
 
+ENV DBHOST=database
+ENV DBPORT=5432
+
 USER root
 RUN yum install -y patch
 USER jboss
@@ -16,13 +19,11 @@ COPY ./i2b2.war /opt/jboss/wildfly/standalone/deployments/
 COPY ./postgresql-*.jar /opt/jboss/wildfly/standalone/deployments/
 
 COPY ./ds/* /usr/share/aktin-notaufnahme-i2b2/datasource/
-COPY ./entrypoint.sh /
+RUN find /usr/share/aktin-notaufnahme-i2b2/datasource -name '*.xml' -exec bash -c "sed -e \"s/__HOST__/${DBHOST}/g\" -e \"s/__PORT__/${DBPORT}/g\" \$0 > /opt/jboss/wildfly/standalone/deployments/\$(basename -- \$0)" {} \;
 
 USER root
 RUN chown -R jboss:jboss /opt/jboss/wildfly/standalone/deployments /usr/share/aktin-notaufnahme-i2b2/datasource
 USER jboss
 
-ENV DBHOST=database
-ENV DBPORT=5432
-
+COPY ./entrypoint.sh /
 CMD ["/entrypoint.sh"]
