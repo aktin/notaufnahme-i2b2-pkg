@@ -38,7 +38,7 @@ EOF
 
 function main() {
 	set -euo pipefail
-	case "$1" in
+	case "${1}" in
 		remove)
 			deactivate_php_curl_extension
 			enable_psql_updates

@@ -9,7 +9,7 @@ set -e
 # Ask questions
 db_input low aktin-notaufnahme/db_conn || true
 
-if [ ! "$RET" = "unix" ]; then
+if [ ! "${RET}" = "unix" ]; then
 	db_input low aktin-notaufnahme/db_host || true
 	db_input low aktin-notaufnahme/db_port || true
 	db_input low aktin-notaufnahme/db_user || true

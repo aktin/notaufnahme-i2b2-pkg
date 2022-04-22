@@ -2,14 +2,14 @@
 
 function main() {
         set -euo pipefail
-        case "$1" in
+        case "${1}" in
                 remove)
                 systemctl stop wildfly || true
                 systemctl disable wildfly || true
                 systemctl daemon-reload
                 ;;
                 upgrade)
-                . "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
+                . "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
                 remove_entry_from_service "wildfly.service" "Requires" "postgresql.service"
                 remove_entry_from_service "wildfly.service" "After" "postgresql.service"
                 ;;

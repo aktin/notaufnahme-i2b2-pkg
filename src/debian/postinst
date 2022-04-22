@@ -25,7 +25,7 @@ function connect_to_psql() {
 function wait_for_psql_connection() {
 	local WAITCOUNT=0
 	while ! systemctl start postgresql 2>/dev/null; do
-		if [ $WAITCOUNT -lt 12 ]; then
+		if [ ${WAITCOUNT} -lt 12 ]; then
 			echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
 			((WAITCOUNT++))
 			sleep 5
@@ -37,11 +37,11 @@ function wait_for_psql_connection() {
 }
 
 function init_and_seed_i2b2_databse() {
-	if  [[ $(eval "$PSQL -l" | grep "i2b2" | wc -l) == 0 ]]; then
+	if  [[ $(eval "${PSQL} -l" | grep "i2b2" | wc -l) == 0 ]]; then
 		echo -e "Creating i2b2 database and users ..."
-		eval "$PSQL -v ON_ERROR_STOP=1 -f /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/database/i2b2_postgres_init.sql" >/dev/null
+		eval "${PSQL} -v ON_ERROR_STOP=1 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_postgres_init.sql" >/dev/null
 		echo -e "Seeding i2b2 database ..."
-		eval "$PSQL -d i2b2 -f /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/database/i2b2_db.sql" >/dev/null
+		eval "${PSQL} -d i2b2 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_db.sql" >/dev/null
 	else
 		echo -e "i2b2 database already exists. Skipping ..."
 	fi
@@ -64,18 +64,18 @@ EOF
 function set_wildfly_service_dependency() {
 	# workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
 	echo -e "Setting up service dependency between postgresql and wildfly ..."
-	. "/usr/share/$DPKG_MAINTSCRIPT_PACKAGE/helper.sh"
+	. "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
 	add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
 	add_entry_to_service "wildfly.service" "After" "postgresql.service"
 }
 
 function deploy_datasources() {
 	echo -e "Deploying i2b2 datasources ..."
-	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
-	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/im-ds.xml > /opt/wildfly/standalone/deployments/im-ds.xml
-	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/ont-ds.xml > /opt/wildfly/standalone/deployments/ont-ds.xml
-	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/pm-ds.xml > /opt/wildfly/standalone/deployments/pm-ds.xml
-	sed -e "s/__HOST__/$HOST/g" -e "s/__PORT__/$PORT/g" /usr/share/$DPKG_MAINTSCRIPT_PACKAGE/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
+	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
+	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/im-ds.xml > /opt/wildfly/standalone/deployments/im-ds.xml
+	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/ont-ds.xml > /opt/wildfly/standalone/deployments/ont-ds.xml
+	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/pm-ds.xml > /opt/wildfly/standalone/deployments/pm-ds.xml
+	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
 }
 
 function create_wildfly_user() {
@@ -87,7 +87,7 @@ function create_wildfly_user() {
 
 function main() {
 	set -euo pipefail
-	case "$1" in
+	case "${1}" in
 		configure)
 			activate_php_curl_extension
 			systemctl enable apache2
