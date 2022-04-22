@@ -48,13 +48,17 @@ function init_and_seed_i2b2_databse() {
 }
 
 function disable_psql_updates() {
-	# stop updates for postgresql-12. Keep this lines until new cda-importer is finished
-	echo -e "Disabling postgresql-12 unattendend-upgrades ..."
-	cat <<EOF >> "/etc/apt/preferences.d/official-package-repositories.pref"
-	Package: postgresql-12 postgresql-client-12 postgresql-common postgresql-client-common
-	Pin: release o=Ubuntu
-	Pin-Priority: -1
+	# stop updates for postgresql-12. Keep this method until new cda-importer is finished
+	if grep -q "Package: postgresql-12" /etc/apt/preferences.d/official-package-repositories.pref; then
+		echo -e "Unattendend-upgrades for postgresql-12 already disabled"
+	else
+		echo -e "Disabling postgresql-12 unattendend-upgrades ..."
+cat <<EOF >> "/etc/apt/preferences.d/official-package-repositories.pref"
+Package: postgresql-12 postgresql-client-12 postgresql-common postgresql-client-common
+Pin: release o=Ubuntu
+Pin-Priority: -1
 EOF
+	fi
 }
 
 function set_wildfly_service_dependency() {
