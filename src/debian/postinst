@@ -1,114 +1,116 @@
 #!/bin/bash
 set -euo pipefail
 
-readonly RES='\e[0m'
-readonly BRED='\e[1;31m'
+readonly RES="\e[0m"
+readonly BRED="\e[1;31m"
+
+readonly OPERATION="${1}"
 
 function activate_php_curl_extension() {
-	if [[ -n $(grep ";extension=curl" /etc/php/*/apache2/php.ini) ]]; then
-		echo -e "Enabling apache2 php-curl extension ..."
-		sed -i 's/;extension=curl/extension=curl/' /etc/php/*/apache2/php.ini
-	else
-		echo -e "apache2 php-curl extension already enabled."
-	fi
-	echo "Restarting apache2 ..."
-	systemctl restart apache2
+    if [[ -n $(grep ";extension=curl" /etc/php/*/apache2/php.ini) ]]; then
+        echo -e "Enabling apache2 php-curl extension ..."
+        sed -i "s/;extension=curl/extension=curl/" /etc/php/*/apache2/php.ini
+    else
+        echo -e "apache2 php-curl extension already enabled."
+    fi
+    echo "Restarting apache2 ..."
+    systemctl restart apache2
 }
 
 function connect_to_psql() {
-	echo "Connecting to postgres via local unix socket."
-	readonly HOST="localhost"
-	readonly PORT="5432"
-	readonly PSQL="sudo -u postgres psql"
+    echo "Connecting to postgres via local unix socket."
+    readonly HOST="localhost"
+    readonly PORT="5432"
+    readonly PSQL="sudo -u postgres psql"
 }
 
 function wait_for_psql_connection() {
-	local WAITCOUNT=0
-	while ! systemctl start postgresql 2>/dev/null; do
-		if [ ${WAITCOUNT} -lt 12 ]; then
-			echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
-			((WAITCOUNT++))
-			sleep 5
-		else
-			echo -e "${BRED}Database not yet installed. Aborting ...${RES}"
-			exit 1
-		fi
-	done
+    local WAITCOUNT=0
+    while ! systemctl start postgresql 2>/dev/null; do
+        if [ ${WAITCOUNT} -lt 12 ]; then
+            echo -e "${BRED}Database not yet installed. Waiting ...${RES}"
+            ((WAITCOUNT++))
+            sleep 5
+        else
+            echo -e "${BRED}Database not yet installed. Aborting ...${RES}"
+            exit 1
+        fi
+    done
 }
 
 function init_and_seed_i2b2_databse() {
-	if  [[ $(eval "${PSQL} -l" | grep "i2b2" | wc -l) == 0 ]]; then
-		echo -e "Creating i2b2 database and users ..."
-		eval "${PSQL} -v ON_ERROR_STOP=1 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_postgres_init.sql" >/dev/null
-		echo -e "Seeding i2b2 database ..."
-		eval "${PSQL} -d i2b2 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_db.sql" >/dev/null
-	else
-		echo -e "i2b2 database already exists. Skipping ..."
-	fi
+    if [[ $(eval "${PSQL} -l" | grep "i2b2" | wc -l) == 0 ]]; then
+        echo -e "Creating i2b2 database and users ..."
+        eval "${PSQL} -v ON_ERROR_STOP=1 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_postgres_init.sql" >/dev/null
+        echo -e "Seeding i2b2 database ..."
+        eval "${PSQL} -d i2b2 -f /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/database/i2b2_db.sql" >/dev/null
+    else
+        echo -e "i2b2 database already exists. Skipping ..."
+    fi
 }
 
 function disable_psql_updates() {
-	# stop updates for postgresql-12. Keep this method until new cda-importer is finished
-	if grep -q "Package: postgresql-12" /etc/apt/preferences.d/official-package-repositories.pref; then
-		echo -e "Unattendend-upgrades for postgresql-12 already disabled"
-	else
-		echo -e "Disabling postgresql-12 unattendend-upgrades ..."
-cat <<EOF >> "/etc/apt/preferences.d/official-package-repositories.pref"
+    # stop updates for postgresql-12. Keep this method until new cda-importer is finished
+    if grep -q "Package: postgresql-12" /etc/apt/preferences.d/official-package-repositories.pref; then
+        echo -e "Unattendend-upgrades for postgresql-12 already disabled"
+    else
+        echo -e "Disabling postgresql-12 unattendend-upgrades ..."
+        cat <<EOF >>"/etc/apt/preferences.d/official-package-repositories.pref"
 Package: postgresql-12 postgresql-client-12 postgresql-common postgresql-client-common
 Pin: release o=Ubuntu
 Pin-Priority: -1
 EOF
-	fi
+    fi
 }
 
 function set_wildfly_service_dependency() {
-	# workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
-	echo -e "Setting up service dependency between postgresql and wildfly ..."
-	. "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
-	add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
-	add_entry_to_service "wildfly.service" "After" "postgresql.service"
+    # workaround for insufficient connection handling of wildfly datasources. Replace as soon as possible.
+    echo -e "Setting up service dependency between postgresql and wildfly ..."
+    . "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
+    add_entry_to_service "wildfly.service" "Requires" "postgresql.service"
+    add_entry_to_service "wildfly.service" "After" "postgresql.service"
 }
 
 function deploy_datasources() {
-	echo -e "Deploying i2b2 datasources ..."
-	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/crc-ds.xml > /opt/wildfly/standalone/deployments/crc-ds.xml
-	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/im-ds.xml > /opt/wildfly/standalone/deployments/im-ds.xml
-	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/ont-ds.xml > /opt/wildfly/standalone/deployments/ont-ds.xml
-	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/pm-ds.xml > /opt/wildfly/standalone/deployments/pm-ds.xml
-	sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" /usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/work-ds.xml > /opt/wildfly/standalone/deployments/work-ds.xml
+    echo -e "Deploying i2b2 datasources ..."
+    sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/crc-ds.xml" >/opt/wildfly/standalone/deployments/crc-ds.xml
+    sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/im-ds.xml" >/opt/wildfly/standalone/deployments/im-ds.xml
+    sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/ont-ds.xml" >/opt/wildfly/standalone/deployments/ont-ds.xml
+    sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/pm-ds.xml" >/opt/wildfly/standalone/deployments/pm-ds.xml
+    sed -e "s/__HOST__/${HOST}/g" -e "s/__PORT__/${PORT}/g" "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/datasource/work-ds.xml" >/opt/wildfly/standalone/deployments/work-ds.xml
 }
 
 function create_wildfly_user() {
-	echo -e "Creating wildfly user and setting up permissions ..."
-	id -u wildfly >/dev/null || adduser --system --group --disabled-login --home /var/lib/wildfly wildfly
-	chown -R wildfly:wildfly /opt/wildfly
-	chown wildfly:wildfly /opt/wildfly/standalone/deployments/*
+    echo -e "Creating wildfly user and setting up permissions ..."
+    id -u wildfly >/dev/null || adduser --system --group --disabled-login --home /var/lib/wildfly wildfly
+    chown -R wildfly:wildfly /opt/wildfly
+    chown wildfly:wildfly /opt/wildfly/standalone/deployments/*
 }
 
 function main() {
-	set -euo pipefail
-	case "${1}" in
-		configure)
-			activate_php_curl_extension
-			systemctl enable apache2
-			connect_to_psql
-			wait_for_psql_connection
-			init_and_seed_i2b2_databse
-			disable_psql_updates
-			systemctl enable postgresql
-			set_wildfly_service_dependency
-			deploy_datasources
-			create_wildfly_user
-			systemctl enable wildfly
-			systemctl start wildfly
-			systemctl daemon-reload
-			;;
-		abort-remove)
-			systemctl enable wildfly || true
-			systemctl start wildfly || true
-			systemctl daemon-reload
-			;;
-	esac
+    set -euo pipefail
+    case "${OPERATION}" in
+    configure)
+        activate_php_curl_extension
+        systemctl enable apache2
+        connect_to_psql
+        wait_for_psql_connection
+        init_and_seed_i2b2_databse
+        disable_psql_updates
+        systemctl enable postgresql
+        set_wildfly_service_dependency
+        deploy_datasources
+        create_wildfly_user
+        systemctl enable wildfly
+        systemctl start wildfly
+        systemctl daemon-reload
+        ;;
+    abort-remove)
+        systemctl enable wildfly || true
+        systemctl start wildfly || true
+        systemctl daemon-reload
+        ;;
+    esac
 }
 
 main

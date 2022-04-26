@@ -1,17 +1,22 @@
 #!/bin/bash
+set -euo pipefail
+
+readonly OPERATION="${1}"
 
 function main() {
-        set -euo pipefail
-        case "${1}" in
-                remove)
-                systemctl stop wildfly || true
-                systemctl disable wildfly || true
-                systemctl daemon-reload
-                ;;
-                upgrade)
-                . "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
-                remove_entry_from_service "wildfly.service" "Requires" "postgresql.service"
-                remove_entry_from_service "wildfly.service" "After" "postgresql.service"
-                ;;
-        esac
+    set -euo pipefail
+    case "${OPERATION}" in
+    remove)
+        systemctl stop wildfly || true
+        systemctl disable wildfly || true
+        systemctl daemon-reload
+        ;;
+    upgrade)
+        . "/usr/share/${DPKG_MAINTSCRIPT_PACKAGE}/helper.sh"
+        remove_entry_from_service "wildfly.service" "Requires" "postgresql.service"
+        remove_entry_from_service "wildfly.service" "After" "postgresql.service"
+        ;;
+    esac
 }
+
+main

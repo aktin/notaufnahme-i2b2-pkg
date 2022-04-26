@@ -1,54 +1,57 @@
 #!/bin/bash
+set -euo pipefail
+
+readonly OPERATION="${1}"
 
 function deactivate_php_curl_extension() {
-	echo "Disabling apache2 php-curl extension ..."
-	sed -i 's/extension=curl/;extension=curl/g' /etc/php/*/apache2/php.ini || true
-	systemctl restart apache2 || true
+    echo "Disabling apache2 php-curl extension ..."
+    sed -i "s/extension=curl/;extension=curl/g" /etc/php/*/apache2/php.ini || true
+    systemctl restart apache2 || true
 }
 
 function enable_psql_updates() {
-	echo -e "Enabling postgresql-12 unattendend-upgrades ..."
-    sed -i '/Package: postgresql-12/{N;N;d;}' /etc/apt/preferences.d/official-package-repositories.pref
+    echo -e "Enabling postgresql-12 unattendend-upgrades ..."
+    sed -i "/Package: postgresql-12/{N;N;d;}" /etc/apt/preferences.d/official-package-repositories.pref
 }
 
 function delete_wildfly_remnants() {
-	echo -e "Deleting remnants of wildfly ..."
-	rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
-	rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}
-	rm -f /opt/wildfly/standalone/deployments/{crc,im,ont,pm,work}-ds.xml
+    echo -e "Deleting remnants of wildfly ..."
+    rm -rf /opt/wildfly/standalone/{tmp,configuration,data,log}
+    rm -f /opt/wildfly/standalone/deployments/*.{deployed,failed,isdeploying,pending}
+    rm -f /opt/wildfly/standalone/deployments/{crc,im,ont,pm,work}-ds.xml
 }
 
 function delete_wildfly_user() {
-	echo -e "Deleting wildfly user..."
-	if id -u wildfly &>/dev/null; then 
-		deluser --remove-home --force wildfly;
-	else
-		echo -e "User wildfly is already deleted";
-	fi
+    echo -e "Deleting wildfly user..."
+    if id -u wildfly &>/dev/null; then
+        deluser --remove-home --force wildfly
+    else
+        echo -e "User wildfly is already deleted"
+    fi
 }
 
 function drop_i2b2_database() {
-	echo "Dropping I2B2 database ..."
-	eval "sudo -u postgres psql -v ON_ERROR_STOP=1" <<EOF >/dev/null
+    echo "Dropping I2B2 database ..."
+    eval "sudo -u postgres psql -v ON_ERROR_STOP=1" <<EOF >/dev/null
 __I2B2_DROP__
 
 EOF
-	db_purge
+    db_purge
 }
 
 function main() {
-	set -euo pipefail
-	case "${1}" in
-		remove)
-			deactivate_php_curl_extension
-			enable_psql_updates
-			delete_wildfly_remnants
-			delete_wildfly_user
-			;;
-		purge)
-			drop_i2b2_database
-			;;
-	esac
+    set -euo pipefail
+    case "${OPERATION}" in
+    remove)
+        deactivate_php_curl_extension
+        enable_psql_updates
+        delete_wildfly_remnants
+        delete_wildfly_user
+        ;;
+    purge)
+        drop_i2b2_database
+        ;;
+    esac
 }
 
 main
