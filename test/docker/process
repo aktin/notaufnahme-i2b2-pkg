@@ -1,0 +1,12 @@
+
+build images
+
+build container
+
+run test on container
+
+# todo httpd docker needs also custom setting of wildfly url and port
+
+local installation für manuelle tests
+
+wie vorab installieren bei magdeburg wolfsburg?

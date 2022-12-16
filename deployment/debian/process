@@ -1,0 +1,11 @@
+
+reprepro docker
+
+build package and load on reprepro
+
+build repository on reprepro
+
+delete old repo from oldernburg ftp
+
+push from reprepro to oldenburg ftp
+
